@@ -1,0 +1,488 @@
+   
+ 
+   
+ 
+IMPLEMENTASI SMART ROOM SAFETY SYSTEM 
+BERBASIS IOT MENGGUNAKAN NODEMCU DENGAN MONITORING SUHU, 
+DETEKSI API, DAN KONTROL PERANGKAT MELALUI WEB DASHBOARD 
+ 
+ 
+Kelompok 4 
+Aliyah Rahma 103032300126 
+Galih Samudra Pinarindra 103032300079 
+Yuhen Aditya Gunawan 103032530022 
+Arina Rahmania Nabila 103032300129 
+LABORATORIUM INTERNET OF THINGS 
+FAKULTAS INFORMATIKA 
+UNIVERSITAS TELKOM 
+BANDUNG 
+2026 
+ 
+
+
+ 
+  
+SG NODEMCU ii 
+ 
+DAFTAR ISI 
+DAFTAR ISI ..............................................................................................................................ii 
+DAFTAR GAMBAR ............................................................................................................... iii 
+BAB I PENDAHULUAN .......................................................................................................... 1 
+1.1 Latar Belakang ................................................................................................................ 1 
+1.2 Rumusan Masalah ........................................................................................................... 1 
+1.3 Batasan Masalah.............................................................................................................. 2 
+1.4 Tujuan .............................................................................................................................. 2 
+1.5 Manfaat ........................................................................................................................... 2 
+BAB II TINJAUAN PUSTAKA ................................................................................................ 4 
+2.1 Penelitian Terkait ............................................................................................................. 4 
+2.2 Landasan Teori ................................................................................................................ 5 
+2.2.1 Internet of Things ....................................................................................................... 5 
+2.2.2 NodeMCU .................................................................................................................. 5 
+2.2.3 Sensor dan Aktuator ................................................................................................... 6 
+2.2.4 Serial Communication ............................................................................................... 6 
+BAB III METODOLOGI PENELITIAN .................................................................................. 8 
+3.1 Prosedur Penelitian.......................................................................................................... 8 
+3.2 Alat dan Bahan ................................................................................................................ 9 
+3.3 Perancangan Sistem ...................................................................................................... 10 
+3.3.1 Diagram Alir ............................................................................................................ 10 
+3.3.2 Skematik Rangkaian ................................................................................................ 10 
+3.4 Rencana Pengujian ........................................................................................................ 11 
+DAFTAR PUSTAKA ............................................................................................................... 12 
+LAMPIRAN ............................................................................................................................. 13 
+ 
+ 
+
+ 
+  
+SG NODEMCU iii 
+ 
+DAFTAR GAMBAR 
+Gambar 3. 1 diagram alir dari Smart Room Safety System ..................................................... 10 
+Gambar 3. 2 Serial Communicarion ........................................................................................ 12 
+ 
+  
+
+ 
+  
+SG NODEMCU 1 
+ 
+BAB I 
+PENDAHULUAN 
+1.1 Latar Belakang 
+Banyak ruangan seperti laboratorium, ruang server, maupun ruang kerja membutuhkan 
+kondisi lingkungan yang stabil agar perangkat yang ada di dalamnya dapat berfungsi dengan 
+baik. Salah satu faktor yang perlu diperhatikan adalah suhu ruangan, karena suhu yang terlalu 
+tinggi dapat mempengaruhi kinerja perangkat elektronik bahka n berpotensi menyebabkan 
+kerusakan. Selain itu, potensi kebakaran juga menjadi hal yang perlu diwaspadai karena dapat 
+menimbulkan kerugian yang cukup besar apabila tidak terdeteksi sejak awal.  Pada 
+kenyataannya, pemantauan kondisi ruangan masih sering dila kukan secara manual sehingga 
+perubahan suhu maupun munculnya potensi kebakaran tidak selalu dapat diketahui dengan 
+cepat [1] 
+Pada beberapa kondisi, seperti di ruang laboratorium, perangkat yang bekerja secara terus-
+menerus dapat menyebabkan suhu ruangan meningkat tanpa disadari. Jika tidak ada sistem 
+monitoring yang berjalan secara real-time, kenaikan suhu ini sering kali baru diketahui setelah 
+perangkat mengalami penurunan kinerja atau bahkan kerusakan.  Dengan memanfaatkan 
+teknologi Internet of Things (IoT), pemantauan kondisi ruangan dapat dilakukan secara 
+otomatis menggunakan sensor yang terhubung dengan jaringan internet [2]. Melihat kondisi 
+tersebut, diperlukan sebuah sistem yang tidak hanya memantau suhu ruangan tetapi juga 
+mampu mendeteksi adanya api sebagai langkah pencegahan terhadap potensi kebakaran. 
+Berdasarkan permasalahan tersebut, pada proyek ini dirancang sebuah Smart Room Safety 
+System berbasis Internet of Things (IoT) menggunakan NodeMCU yang mampu melakukan 
+monitoring suhu ruangan, mendeteksi keberadaan api, serta memberikan respon otomatis 
+seperti menyalakan kipas ketika suhu meningkat, membuka jendela dan meng aktifkan buzzer 
+saat terdeteksi api, yang dapat dipantau dan dikontrol melalui web dashboard. 
+1.2 Rumusan Masalah 
+Dari uraian latar belakang sebelumnya, muncul beberapa permasalahan yang ingin 
+diselesaikan melalui proyek ini, yaitu: 
+
+ 
+  
+SG NODEMCU 2 
+ 
+1. Bagaimana merancang sistem Smart Room Safety System berbasis Internet of Things 
+(IoT) menggunakan NodeMCU yang dapat digunakan untuk memantau kondisi 
+ruangan? 
+2. Bagaimana sistem dapat melakukan monitoring suhu ruangan secara real -time dan 
+mengaktifkan kipas secara otomatis ketika suhu ruangan melebihi batas yang telah 
+ditentukan? 
+3. Bagaimana sistem dapat mendeteksi adanya api di dalam ruangan sebagai langkah 
+untuk mengantisipasi terjadinya kebakaran? 
+4. Bagaimana membuat web dashboard yang dapat digunakan untuk memantau kondisi 
+ruangan serta mengontrol perangkat seperti kipas dan jendela? 
+1.3 Batasan Masalah 
+Agar pembahasan dalam proyek ini tetap fokus, maka beberapa batasan masalah yang 
+digunakan adalah sebagai berikut: 
+1. Sistem yang dibuat hanya berfokus pada monitoring suhu ruangan dan deteksi api 
+menggunakan NodeMCU berbasis Internet of Things (IoT). 
+2. Respon sistem dibatasi pada menyalakan kipas ketika suhu ruangan melebihi batas 
+tertentu, serta mengaktifkan buzzer dan membuka jendela ketika terdeteksi adanya api. 
+3. Pemantauan kondisi ruangan dilakukan melalui web dashboard yang menampilkan 
+informasi suhu dan status deteksi api. 
+1.4 Tujuan 
+Tujuan dari proyek ini sebagai berikut: 
+1. Merancang dan membangun Smart Room Safety System berbasis Internet of Things 
+(IoT) menggunakan NodeMCU untuk memantau kondisi ruangan. 
+2. Mengimplementasikan sistem monitoring suhu yang dapat mengaktifkan kipas secara 
+otomatis ketika suhu melebihi batas yang ditentukan. 
+3. Membuat sistem yang dapat mendeteksi adanya api dan memberikan peringatan melalui 
+buzzer sebagai langkah pencegahan terhadap potensi kebakaran. 
+4. Mengembangkan web dashboard yang dapat digunakan untuk memantau kondisi 
+ruangan serta mengontrol perangkat seperti kipas dan jendela. 
+
+ 
+  
+SG NODEMCU 3 
+ 
+1.5 Manfaat 
+Manfaat yang diperoleh dari proyek ini adalah sebagai berikut: 
+1. Bagi laboratorium, sistem ini dapat membantu memantau kondisi ruangan seperti suhu 
+dan potensi kebakaran sehingga kondisi ruangan dapat diketahui lebih cepat dan dapat 
+mengurangi risiko kerusakan perangkat. 
+2. Bagi lingkungan kampus, proyek ini dapat menjadi contoh penerapan teknologi Internet 
+of Things (IoT) dalam sistem monitoring dan keamanan ruangan yang dapat digunakan 
+sebagai media pembelajaran. 
+3. Bagi masyarakat, sistem ini memberikan gambaran bagaimana teknologi sederhana 
+berbasis IoT dapat dimanfaatkan untuk membantu memantau kondisi ruangan dan 
+meningkatkan keamanan lingkungan.  
+
+ 
+  
+SG NODEMCU 4 
+ 
+BAB II 
+TINJAUAN PUSTAKA 
+ 
+2.1 Penelitian Terkait 
+Penelitian mengenai sistem monitoring ruangan berbasis Internet of Things (IoT) telah 
+banyak dilakukan untuk meningkatkan keamanan dan efisiensi pengelolaan lingkungan 
+ruangan. Beberapa penelitian sebelumnya yang berkaitan dengan sistem monitoring dan 
+keamanan ruangan berbasis Internet of Things telah dilakukan oleh berbagai peneliti. 
+Penelitian yang dilakukan oleh Wadly dkk. mengembangkan sistem monitoring kualitas 
+udara dan suhu ruangan berbasis Internet of Things menggunakan NodeMCU ESP8266 dengan 
+sensor DHT11 dan MQ-135. Sistem tersebut mampu memantau kondisi lingkungan secara real-
+time dan menampilkan data melalui aplikasi monitoring sehingga pengguna dapat mengetahui 
+kondisi ruangan tanpa harus berada di lokasi secara langsung [3]. Perbedaan penelitian tersebut 
+dengan penelitian ini terletak pada jenis sensor dan fitur keamanan yang digunakan. Penelitian 
+ini menggunakan sensor DHT22 yang memiliki tingkat akurasi lebih tinggi dibandingkan 
+DHT11, serta menambahkan flame sensor untuk me ndeteksi keberadaan api sehingga sistem 
+tidak hanya memantau kondisi lingkungan tetapi juga meningkatkan aspek keamanan ruangan. 
+Penelitian lain yang dilakukan oleh Hidayah, dkk. (2025) mengembangkan sistem 
+pengukuran suhu berbasis mikrokontroler ESP8266 dengan menggunakan sensor DHT22. 
+Sistem tersebut dirancang sebagai alat pengukur suhu digital yang dapat menampilkan hasil 
+pengukuran secara real-time melalui perangkat tampilan. Hasil penelitian menunjukkan bahwa 
+sistem dapat bekerja secara stabil dalam membaca suhu lingkungan [4]. Meskipun demikian, 
+sistem yang dikembangkan masih berfokus pada proses pengukuran dan monitoring suhu saja. 
+Pada penelitian ini, monitoring suhu tidak hanya digunakan untuk menampilkan data, tetapi 
+juga dimanfaatkan sebagai parameter untuk mengontrol perangkat seperti kipas secara otomatis 
+ketika suhu ruangan melebihi batas tertentu, sehingga sistem dapat merespon perubahan 
+kondisi lingkungan secara langsung. 
+Selain itu, Penelitian yang dilakukan oleh Salindeho dan Wellem (2023) mengembangkan 
+sistem pendeteksi kebakaran berbasis IoT menggunakan NodeMCU ESP8266 dan flame sensor 
+yang mampu mendeteksi adanya api serta memberikan peringatan kepada pengguna melalui 
+
+ 
+  
+SG NODEMCU 5 
+ 
+sistem notifikasi [5]. Namun, sistem yang dikembangkan masih berfokus pada fungsi deteksi 
+kebakaran dan pemberian peringatan saja. Pada penelitian ini, sistem yang dikembangkan 
+memiliki fungsi yang lebih terintegrasi dengan menambahkan monitoring suhu ruangan serta 
+kontrol peran gkat seperti kipas dan jendela melalui web dashboard, sehingga sistem tidak 
+hanya berfungsi sebagai alat peringatan kebakaran tetapi juga sebagai Smart Room Safety 
+System yang mampu menjaga kondisi dan keamanan ruangan secara bersamaan. 
+Berdasarkan beberapa penelitian tersebut, dapat disimpulkan bahwa penelitian 
+sebelumnya umumnya berfokus pada fungsi tertentu seperti monitoring suhu atau deteksi 
+kebakaran. Oleh karena itu, pada penelitian ini dikembangkan sistem yang mengintegrasikan 
+monitoring suhu, deteksi api, serta kontrol perangkat melalui web dashboard dalam satu sistem 
+Smart Room Safety System berbasis IoT. 
+2.2 Landasan Teori 
+Landasan teori merupakan konsep dasar yang digunakan sebagai acuan dalam perancangan 
+sistem Smart Room Safety System. Beberapa konsep yang digunakan dalam penelitian ini 
+meliputi Internet of Things, NodeMCU, sensor dan aktuator, serta komunikasi serial 
+2.2.1 Internet of Things 
+Internet of Things (IoT) merupakan konsep yang menggambarkan jaringan perangkat fisik 
+yang saling terhubung melalui internet dan mampu mengumpulkan serta bertukar data secara 
+otomatis. Perangkat tersebut biasanya dilengkapi dengan sensor, perangkat lunak, dan 
+teknologi komunikasi yang memungkinkan objek fisik berinteraksi dengan sistem lain melalui 
+jaringan internet [6]  
+Teknologi IoT memungkinkan proses monitoring dan pengendalian sistem dilakukan 
+secara real-time dari jarak jauh. Konsep ini banyak diterapkan dalam berbagai bidang seperti 
+smart home, smart city, monitoring lingkungan, serta sistem keamanan.  Pada penelitian ini, 
+konsep IoT digunakan untuk menghubungkan NodeMCU dengan web dashboard sehingga 
+pengguna dapat memantau kondisi ruangan serta mengontrol perangkat seperti kipas dan 
+jendela melalui jaringan internet 
+2.2.2 NodeMCU 
+NodeMCU merupakan salah satu platform mikrokontroler berbasis modul WiFi 
+ESP8266 yang banyak digunakan dalam pengembangan sistem Internet of Things. NodeMCU 
+memiliki kemampuan konektivitas WiFi yang memungkinkan perangkat untuk terhubung 
+
+ 
+  
+SG NODEMCU 6 
+ 
+langsung dengan jaringan internet sehingga dapat mengirim maupun menerima data secara 
+real-time [3]. 
+Selain itu, NodeMCU juga memiliki beberapa pin input dan output yang dapat 
+digunakan untuk menghubungkan berbagai sensor maupun aktuator. Dengan dukungan 
+pemrograman melalui Arduino IDE, NodeMCU menjadi salah satu mikrokontroler yang 
+populer digunakan dala m pengembangan sistem monitoring dan kontrol berbasis IoT.  Pada 
+penelitian ini, NodeMCU digunakan sebagai pusat pengendali sistem yang menerima data dari 
+sensor suhu dan flame sensor, kemudian memproses data tersebut untuk mengaktifkan 
+perangkat tertentu seperti kipas, servo jendela, maupun buzzer sebagai sistem peringatan. 
+2.2.3 Sensor dan Aktuator 
+Sensor merupakan perangkat yang digunakan untuk mendeteksi atau mengukur suatu 
+kondisi fisik di lingkungan sekitar kemudian mengubahnya menjadi sinyal yang dapat diproses 
+oleh mikrokontroler. Dalam sistem ini digunakan sensor suhu DHT22 untuk mengukur suhu  
+ruangan secara real -time. Sensor ini banyak digunakan dalam sistem monitoring lingkungan 
+karena memiliki tingkat akurasi yang cukup baik dalam mengukur suhu dan kelembaban udara 
+[4]. 
+Selain sensor suhu, sistem ini juga menggunakan flame sensor yang berfungsi untuk 
+mendeteksi keberadaan api berdasarkan radiasi inframerah yang dihasilkan oleh nyala api. 
+Sensor ini biasanya digunakan dalam sistem keamanan sebagai alat deteksi dini terhadap 
+potensi kebakaran.  
+Aktuator merupakan perangkat yang berfungsi untuk melakukan tindakan tertentu 
+berdasarkan perintah dari mikrokontroler. Pada sistem ini, aktuator yang digunakan antara lain 
+kipas untuk membantu menurunkan suhu ruangan, servo untuk membuka atau menutup 
+jendela, serta buzzer sebagai alat peringatan ketika sistem mendeteksi adanya api di dalam 
+ruangan. 
+2.2.4 Serial Communication 
+Serial communication atau komunikasi serial merupakan metode komunikasi data yang 
+mengirimkan data secara berurutan melalui satu jalur komunikasi antara dua perangkat. Dalam 
+sistem mikrokontroler, komunikasi serial sering digunakan untuk proses pertukaran data antara 
+mikrokontroler, sensor, maupun perangkat lain seperti komputer [7]. 
+Komunikasi serial bekerja dengan cara mengirimkan data dalam bentuk bit secara 
+berurutan melalui jalur transmisi yang sama. Metode komunikasi ini banyak digunakan pada 
+
+ 
+  
+SG NODEMCU 7 
+ 
+sistem embedded dan mikrokontroler karena lebih sederhana serta membutuhkan jumlah jalur 
+komunikasi yang lebih sedikit dibandingkan komunikasi paralel [7]. 
+Pada NodeMCU, komunikasi serial biasanya digunakan untuk menampilkan data 
+pembacaan sensor melalui Serial Monitor pada Arduino IDE sehingga memudahkan proses 
+debugging dan pengujian sistem. Selain itu, data dari sensor juga dapat dikirimkan melalui 
+jaringan WiFi ke server atau web dashboard sehingga pengguna dapat memantau kondisi 
+ruangan secara real-time. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+  
+SG NODEMCU 8 
+ 
+BAB III 
+METODOLOGI PENELITIAN 
+ 
+3.1 Prosedur Penelitian 
+Adapun prosedur penelitian yang akan dilakukan untuk pembuatan Smart Room 
+Safety System adalah sebagai berikut. 
+1. Studi Literatur 
+Pada tahap ini, peneliti mempelajari penelitian sebelumnya yang berkaitan dengan 
+Smart Room Safety System. Adapun yang akan dipelajari berkaitan dengan Internet 
+of Things (IoT), Node MCU,  sensor dan aktuator  serta sistem monitoring berbasis 
+web sebagai dasar teori dalam perancangan dan pengembangan sistem yang akan 
+dibuat. 
+2. Perancangan Sistem 
+Pada tahap ini, peneliti akan merancang sistem yang akan di buat , meliputi 
+perancangan perangkat keras (hardware) dan perangkat lunak (software). 
+Perancangan hardware meliputi pemilihan alat dan bahan, Sedangkan perancangan 
+software meliputi pembuatan program pada Arduino IDE dan pembuatan web 
+dashboard. 
+3. Pengerjaan Sistem 
+Pada tahap ini, akan dilakuka n perakitan komponen sesuai dengan rancangan yang 
+telah dibuat. NodeMCU dihubungkan dengan alat -alat yang dibutuhkan. Pembuatan 
+web dashboard juga dilakukan utnuk memonitor suhu dan mengontrol kipas secara 
+manual.  
+4. Pengujian Sistem 
+Setelah sistem dibuat, peneliti akan melakukan pengujian untuk memastikan bahwa 
+seluruh komponen dan sistem bekerja dengan baik. 
+5. Penyusunan Laporan 
+Pada tahap ini, peneliti akan melakukan penyusunan laporan berdasarkan seluruh 
+proses yang telah dilakukan. Laporan disusun secara sistematis sesuai dengan format 
+penulisan yang telah ditentukan. 
+ 
+
+ 
+  
+SG NODEMCU 9 
+ 
+3.2 Alat dan Bahan 
+Adapun alat dan bahan yang dibutuhka dapam penelitian ini untuk membuat Smart 
+Room Safety System adalah sebagai berikut. 
+1. Perangkat Keras (Hardware) 
+a. NodeMCU ESP8266 
+b. Breadboard 
+c. Sensor Suhu (DHT22) 
+d. Flame Sensor 
+e. Fan 12 volt 
+f. Servo 
+g. Relay 
+h. Kabel jumper 
+i. Adaptor 
+j. Buzzer 
+2. Perangkat Lunak 
+a. Arduino IDE 
+b. Visual Studio Code  
+
+ 
+  
+SG NODEMCU 10 
+ 
+3.3 Perancangan Sistem 
+3.3.1 Diagram Alir 
+ 
+Gambar 3. 1 diagram alir dari Smart Room Safety System 
+3.3.2 Skematik Rangkaian 
+Skematik rangkaian merupakan gambaran hubungan antara komponen -komponen yang 
+digunakan dalam sistem Smart Room Safety berbasis NodeMCU. Pada sistem ini, NodeMCU 
+
+
+ 
+  
+SG NODEMCU 11 
+ 
+berfungsi sebagai mikrokontroler utama yang menghubungkan sensor dan aktuator serta 
+mengirimkan data ke dashboard monitoring berbasis web.  
+Sensor suhu dan kelembaban yang digunakan adalah DHT22, yang berfungsi untuk 
+membaca kondisi suhu di dalam ruangan .Selain itu, sistem juga menggunakan flame sensor 
+untuk mendeteksi adanya api atau peningkatan kadar gas/asap di dalam ruangan. Sensor-sensor 
+tersebut terhubung ke pin input pada NodeMCU sehingga dapat memberikan sinyal  kepada 
+aktuator untuk bergerak. 
+Pada bagian aktuator, sistem menggunakan kipas yang dikontrol melalui relay untuk 
+mengatur sirkulasi udara ketika suhu ruangan melebihi batas yang telah ditentukan. Selain itu, 
+digunakan juga motor servo yang berfungsi untuk membuka jendela secara otomatis  ketika 
+sensor mendeteksi adanya api. 
+NodeMCU juga terhubung dengan jaringan WiFi sehingga data yang diperoleh dari sensor 
+dapat dikirimkan ke dashboard monitoring secara real -time. Dashboard ini menampilkan 
+informasi seperti suhu ruangan, kelembaban, status deteksi api atau asap, serta riwaya t suhu 
+dalam bentuk grafik. 
+Hubungan antar komponen pada sistem ini dapat dilihat pada gambar skematik rangkaian 
+yang menunjukkan koneksi antara pin NodeMCU dengan sensor dan aktuator yang digunakan. 
+
+ 
+  
+SG NODEMCU 12 
+ 
+ 
+Gambar 3. 2 Serial Communicarion 
+Prototype rangkaian nya, flame sensor diganti dengan push button, fan diganti dengan LED 
+3.4 Rencana Pengujian 
+Adapun rencana pengujian yang akan dilakukan untuk memastikan sistem yang 
+dirancang berjalan sesuai yang diharapkan sebagai berikut. 
+1. Pengujian Koneksi NodeMCU 
+Pengujian dilakukan dengan menghubungkan NodeMCU ke jaringan WiFi dan 
+dashboard sistem. Sistem dinyatakan berhasil apabila dashboard menaplikan status 
+NodeMCU dalam kondisi terhubung serta menampilkan informasi uptime dan waktu 
+sinkronisasi terakhir. 
+2. Pengujian Sensor Suhu 
+Pengujian dilakukan dengan membaca nilai suhu dari sensor DHT22 dan 
+membandingkannya dengan thermometer digital. Sistem dinyatakan berhasil apabila 
+
+
+ 
+  
+SG NODEMCU 13 
+ 
+nilai suhu yang terbaca mendekati nilai dari thermometer dan dapat ditampilkan pada 
+dashboard. 
+3. Pengujian Deteksi Api  
+Pengujian dilakukan dengan memberikan si mulasi sumber api pada sensor. Sistem 
+dinyatakan berhasil apabila indikator pada dashboard memberikan peringatan dan 
+buzzer menyala. 
+4. Pengujian Kipas 
+Pengujian dilakukan dengan dua cara. Pertama, menaikkan suhu lingkungan hingga 
+melebihi batas yang ditentukan. Sistem dinyatakan berhasil apabilla kipas menyala 
+secara otomatis. Kedua,memberikan perintah menyalakan atau mematikan kipas 
+melalui dashboard pada suhu normal. Sistem dinyatakan berhasil apabila kipas 
+melakukan perintah yang diberikan pengguna. 
+5. Pengujian Pembuka Jendela Otomatis 
+Penguian dilakukan denegan mensi mulasikan kondisi  terdeteksinya api. Sistem 
+dinyatakan berhasil apabila jendela terbuka secara otomatis 
+6. Pengujian Integrasi Sistem 
+Pengujian dilakukan dengan menjalankan seluruh sistem secara bersamaan. Sistem 
+dinyatakan berhasil apabila sensor, NodeMCU, dashboard monitoring, serta actuator 
+dapat bekerja secara terintegrasi sesuai dengan perancangan sistem. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+  
+SG NODEMCU 14 
+ 
+DAFTAR PUSTAKA 
+[1] B. Raharjo and S. Marwanto, “RANCANGAN SISTEM MONITORING SUHU 
+DAN KELEMBAPAN RUANG SERVER BERBASIS INTERNET OF 
+THINGS,” A. Romadhona, vol. 6, no. 2, pp. 61–68, Sep. 2019. 
+[2] S. A. Fadillah and E. Permata, “Monitoring Suhu dan Kelembaban Di Ruang Data 
+Center Dinas Komunikasi Informatika Statistik dan Persandian Provinsi Banten 
+Berbasis Internet of Things (IoT),” vol. 6, no. 1, pp. 98–109, May 2024. 
+[3] F. Wadly, Z. Ramadhan, M. Muslim, and K. Rosan, “Integrating the NodeMCU 
+ESP8266 Microcontroller with the DHT11 and MQ -135 Sensors Enables IoT -
+Based Air Quality Monitoring,” International Conference on Artificial 
+Intelligence, Navigation, Engineering, and Aviation Technology , pp. 272 –277, 
+Mar. 2025. 
+[4] J. W. Hidayah, H. Purwadi, and A. Rizal, “Design and Development of an 
+ESP8266-Based Digital Ther -mometer Using a DHT22 Sensor with OLED 
+Display Output,” 2025, doi: 10.55606/jeei.v6i1.6661. 
+[5] G. G. Salindeho and T. Wellem, “PERANCANGAN DAN IMPLEMENTASI 
+SISTEM PENDETEKSI DAN PERINGATAN KEBAKARAN BERBASIS IOT 
+MENGGUNAKAN NODEMCU ESP8266 DAN SENSOR API,” Oct. 2023. 
+[6] R. J. Gubbi, S. Buyya, Marusic, and M. Palaniswami, “Internet of Things (IoT): 
+A vision, architectural elements, and future directions,” vol. 29, no. 7, pp. 1645–
+1660, Sep. 2013. 
+[7] M. Margolis, “Arduino Cookbook,” Sebastopol, CA, 2012. 
+  
+ 
+ 
+ 
+
+ 
+  
+SG NODEMCU 15 
+ 
+LAMPIRAN 
+1. Rencana Anggaran Biaya 
+Berikut lampitan rencana anggaran biaya yang akan dikeluarkan pada kegiatan ini. 
+RAB_TUBES_SG_NODEMCU_KELOMPOK4.xlsx 
+2. Prototype Dashboard 
+ 
+ 
+
+
+ 
+  
+SG NODEMCU 16 
+ 
+Tampilan Dashboard website smart room safety  
+Tampilan untuk mengatur perangkat yang tersedia (untuk menyalakan dan mematikan 
+perangkat) 
+
+
+ 
+  
+SG NODEMCU 17 
+ 
+Riwayat pemantauan ruangan berdasarkan notifikasi, peringatan serta mengetahui suhu rata 
+rata ruangan  
+
+
