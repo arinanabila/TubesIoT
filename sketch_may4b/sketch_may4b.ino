@@ -122,9 +122,31 @@ void setup() {
   delay(2000); // Tunggu serial siap
   Serial.begin(115200);
   Serial.println("\n=== SMART ROOM SAFETY SYSTEM BOOT ===");
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
-  dht.begin();
+  // Disable brownout detector dilepas agar ESP restart secara wajar jika power drop
+  // Koneksi WiFi
+  Serial.print("Menghubungkan ke Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+  
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  
+  unsigned long wifiStart = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    if (millis() - wifiStart > 15000) {
+      Serial.println("\nWiFi GAGAL! Cek SSID/Password.");
+      break;
+    }
+    Serial.print(".");
+    delay(300);
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("\nWiFi Terhubung! IP: ");
+    Serial.println(WiFi.localIP());
+  }
 
+  // Setelah WiFi stabil, baru nyalakan Hardware
+  dht.begin();
   pinMode(FLAME_PIN,  INPUT);
   pinMode(RELAY_PIN,  OUTPUT);
   pinMode(LED_PIN,    OUTPUT);
@@ -137,29 +159,9 @@ void setup() {
   servoJendela.setPeriodHertz(50);
   servoJendela.attach(SERVO_PIN, 500, 2400);
   servoJendela.write(SERVO_TUTUP);
+  
   Serial.println("Hardware OK.");
-
-  // Koneksi WiFi dengan timeout 15 detik
-  Serial.print("Menghubungkan ke Wi-Fi: ");
-  Serial.println(WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.setTxPower(WIFI_POWER_8_5dBm); // Kurangi TX power agar tidak brownout
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  unsigned long wifiStart = millis();
-  while (WiFi.status() != WL_CONNECTED) {
-    if (millis() - wifiStart > 15000) {
-      Serial.println("\nWiFi GAGAL! Cek SSID/Password.");
-      Serial.println("Sistem berjalan TANPA Firebase.");
-      break;
-    }
-    Serial.print(".");
-    delay(300);
-  }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print("\nWiFi Terhubung! IP: ");
-    Serial.println(WiFi.localIP());
-  }
-
+  
   // Inisialisasi kontrol di Firebase
   firebaseSet("/Kontrol/Kipas", "false");
   firebaseSet("/Kontrol/Alarm", "false");

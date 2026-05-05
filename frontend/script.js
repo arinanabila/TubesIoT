@@ -162,17 +162,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Chart
         const chartLabel = timeStr;
-        if (chartLabels.length >= MAX_CHART_POINTS) {
-            chartLabels.shift();
-            chartData.shift();
-        }
-        chartLabels.push(chartLabel);
-        chartData.push(suhu);
-        tempChart.update('none');
+        // Hanya tambahkan point baru jika waktu (detik) berbeda atau data pertama
+        if (chartLabels.length === 0 || chartLabels[chartLabels.length - 1] !== chartLabel) {
+            if (chartLabels.length >= MAX_CHART_POINTS) {
+                chartLabels.shift();
+                chartData.shift();
+            }
+            chartLabels.push(chartLabel);
+            chartData.push(suhu);
+            tempChart.update('none');
 
-        // Update Data Points Counter
-        totalDataPoints++;
-        dataPointsEl.innerText = totalDataPoints;
+            // Update Data Points Counter hanya saat ada point baru
+            totalDataPoints++;
+            dataPointsEl.innerText = totalDataPoints;
+        } else {
+            // Update nilai suhu di detik yang sama (overwrite point terakhir)
+            chartData[chartData.length - 1] = suhu;
+            tempChart.update('none');
+        }
 
         // --- FIRE / DANGER STATE ---
         if (apiTerdeteksi) {
@@ -227,24 +234,24 @@ document.addEventListener('DOMContentLoaded', () => {
         addNotification('info', 'Sistem Smart Room Safety terhubung ke Firebase.');
 
         // ============================
-        // LISTENER: Baca data Sensor
+        // LISTENER: Baca Semua Data (Sensor & Status)
         // ============================
-        const sensorRef = ref(db, '/Sensor');
-        onValue(sensorRef, (snapshot) => {
+        const rootRef = ref(db, '/');
+        onValue(rootRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
 
-            const suhu        = parseFloat(data.Suhu)      || 0;
-            const kelembapan  = parseFloat(data.Kelembapan) || 0;
-            const apiDeteksi  = Boolean(data.Api);
+            const sensor = data.Sensor || {};
+            const status = data.Status || {};
 
-            // Baca Status Perangkat
-            const statusRef = ref(db, '/Status');
-            // Gunakan onValue sekali saja untuk status sinkron
-            onValue(statusRef, (statusSnap) => {
-                const st = statusSnap.val() || {};
-                updateUI(suhu, kelembapan, apiDeteksi, Boolean(st.Kipas), Boolean(st.Alarm));
-            }, { onlyOnce: true });
+            const suhu        = parseFloat(sensor.Suhu)      || 0;
+            const kelembapan  = parseFloat(sensor.Kelembapan) || 0;
+            const apiDeteksi  = Boolean(sensor.Api);
+            
+            const statusKipas = Boolean(status.Kipas);
+            const statusAlarm = Boolean(status.Alarm);
+
+            updateUI(suhu, kelembapan, apiDeteksi, statusKipas, statusAlarm);
         });
 
         // ============================
