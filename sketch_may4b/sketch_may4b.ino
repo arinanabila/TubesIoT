@@ -4,44 +4,42 @@
  * Kelompok 4 - Laboratorium IoT
  * Universitas Telkom 2026
  * 
- * Libraries yang perlu diinstall di Arduino IDE:
- *   1. DHT sensor library (by Adafruit)
- *   2. ESP32Servo
- *   3. Firebase ESP Client (by Mobizt)
+ * Libraries yang dibutuhkan:
+ *   1. DHT sensor library (by Adafruit)  <- install via Library Manager
+ *   2. ESP32Servo                         <- install via Library Manager
+ *   (TIDAK PERLU library Firebase apapun!)
  * ============================================
  */
 
-#include <Arduino.h>
 #include <WiFi.h>
-#include <Firebase_ESP_Client.h>
-#include "addons/TokenHelper.h"
-#include "addons/RTDBHelper.h"
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 #include <DHT.h>
 #include <ESP32Servo.h>
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
 
 // ============================================
 // GANTI SESUAI DATA ANDA
 // ============================================
-#define WIFI_SSID       "ARINA"
-#define WIFI_PASSWORD   "88888888"
-#define API_KEY         "AIzaSyBgr3EQDCI_Q_4ZidXilpGU5RuANc02d1k"
-#define DATABASE_URL    "https://smartroomiot-5ecfd-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define WIFI_SSID     "Mansion"
+#define WIFI_PASSWORD "6A95IB76"
+
+const char* FIREBASE_URL     = "https://smartroomiot-5ecfd-default-rtdb.asia-southeast1.firebasedatabase.app";
+const char* FIREBASE_API_KEY = "AIzaSyBgr3EQDCI_Q_4ZidXilpGU5RuANc02d1k";
 
 // ============================================
 // KONFIGURASI PIN
 // ============================================
-#define DHTPIN       4
-#define DHTTYPE      DHT22
-#define FLAME_PIN    34
-#define SERVO_PIN    18
-#define RELAY_PIN    26
-#define LED_PIN      14
-#define BUZZER_PIN   27
+#define DHTPIN      4
+#define DHTTYPE     DHT22
+#define FLAME_PIN   34
+#define SERVO_PIN   18
+#define RELAY_PIN   26
+#define LED_PIN     14
+#define BUZZER_PIN  27
 
-// ============================================
-// KONFIGURASI SISTEM
-// ============================================
-#define BATAS_SUHU   32.0   // Suhu °C di atas ini, kipas otomatis menyala
+#define BATAS_SUHU   32.0
 #define RELAY_ON     HIGH
 #define RELAY_OFF    LOW
 #define SERVO_TUTUP  0
@@ -52,26 +50,54 @@
 // ============================================
 DHT dht(DHTPIN, DHTTYPE);
 Servo servoJendela;
+WiFiClientSecure client;
+HTTPClient http;
 
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
-bool signupOK = false;
+unsigned long waktuTerakhirApi = 0;
+unsigned long waktuBlink       = 0;
+unsigned long waktuKirimData   = 0;
+unsigned long waktuBacaKontrol = 0;
 
-unsigned long waktuTerakhirApi  = 0;
-unsigned long waktuBlink        = 0;
-unsigned long waktuKirimData    = 0;
-unsigned long waktuBacaKontrol  = 0;
-
-bool ledState     = LOW;
-int  posisiServo  = SERVO_TUTUP;
-
-// Kontrol dari Web Dashboard
+bool ledState    = LOW;
+int  posisiServo = SERVO_TUTUP;
 bool kipasDariWeb = false;
 bool alarmDariWeb = false;
 
 // ============================================
-// FUNGSI GERAK SERVO HALUS
+// FUNGSI: Kirim data ke Firebase (PUT)
+// ============================================
+void firebaseSet(String path, String jsonValue) {
+  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
+  client.setInsecure();
+  http.begin(client, url);
+  http.addHeader("Content-Type", "application/json");
+  int httpCode = http.PUT(jsonValue);
+  if (httpCode > 0) {
+    Serial.printf("[Firebase] SET %s = %s (HTTP %d)\n", path.c_str(), jsonValue.c_str(), httpCode);
+  } else {
+    Serial.printf("[Firebase] Error: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();
+}
+
+// ============================================
+// FUNGSI: Baca data dari Firebase (GET)
+// ============================================
+String firebaseGet(String path) {
+  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
+  client.setInsecure();
+  http.begin(client, url);
+  int httpCode = http.GET();
+  String payload = "null";
+  if (httpCode == 200) {
+    payload = http.getString();
+  }
+  http.end();
+  return payload;
+}
+
+// ============================================
+// FUNGSI: Gerak servo halus
 // ============================================
 void gerakServoSmooth(int dari, int ke) {
   if (dari < ke) {
@@ -92,11 +118,12 @@ void gerakServoSmooth(int dari, int ke) {
 // ============================================
 void setup() {
   Serial.begin(115200);
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
   dht.begin();
 
-  pinMode(FLAME_PIN, INPUT);
-  pinMode(RELAY_PIN, OUTPUT);
-  pinMode(LED_PIN,   OUTPUT);
+  pinMode(FLAME_PIN,  INPUT);
+  pinMode(RELAY_PIN,  OUTPUT);
+  pinMode(LED_PIN,    OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
   digitalWrite(RELAY_PIN,  RELAY_OFF);
@@ -107,7 +134,7 @@ void setup() {
   servoJendela.attach(SERVO_PIN, 500, 2400);
   servoJendela.write(SERVO_TUTUP);
 
-  // --- KONEKSI WIFI ---
+  // Koneksi WiFi
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Menghubungkan ke Wi-Fi");
   while (WiFi.status() != WL_CONNECTED) {
@@ -118,20 +145,9 @@ void setup() {
   Serial.print("WiFi Terhubung! IP: ");
   Serial.println(WiFi.localIP());
 
-  // --- KONEKSI FIREBASE ---
-  config.api_key      = API_KEY;
-  config.database_url = DATABASE_URL;
-
-  if (Firebase.signUp(&config, &auth, "", "")) {
-    Serial.println("Firebase: Sign Up Berhasil!");
-    signupOK = true;
-  } else {
-    Serial.printf("Firebase Error: %s\n", config.signer.signupError.message.c_str());
-  }
-
-  config.token_status_callback = tokenStatusCallback;
-  Firebase.begin(&config, &auth);
-  Firebase.reconnectWiFi(true);
+  // Inisialisasi kontrol di Firebase
+  firebaseSet("/Kontrol/Kipas", "false");
+  firebaseSet("/Kontrol/Alarm", "false");
 
   Serial.println("=== SMART ROOM SAFETY SYSTEM AKTIF ===");
 }
@@ -141,17 +157,16 @@ void setup() {
 // ============================================
 void loop() {
   // --- BACA SENSOR ---
-  int   flameValue    = digitalRead(FLAME_PIN);
-  bool  apiTerdeteksi = (flameValue == HIGH); // Jika sensor terbalik, ganti HIGH -> LOW
+  int  flameValue    = digitalRead(FLAME_PIN);
+  bool apiTerdeteksi = (flameValue == HIGH); // Ganti HIGH -> LOW jika sensor terbalik
 
-  float suhu      = dht.readTemperature();
+  float suhu       = dht.readTemperature();
   float kelembapan = dht.readHumidity();
   bool  suhuPanas  = (!isnan(suhu) && suhu >= BATAS_SUHU);
 
-  // Serial Monitor
   Serial.println("-----------------------------");
   if (!isnan(suhu)) {
-    Serial.printf("Suhu       : %.1f °C\n", suhu);
+    Serial.printf("Suhu       : %.1f C\n", suhu);
     Serial.printf("Kelembapan : %.1f %%\n", kelembapan);
   } else {
     Serial.println("Gagal membaca DHT22!");
@@ -159,61 +174,37 @@ void loop() {
   Serial.printf("Flame Raw  : %d\n", flameValue);
   Serial.printf("Sensor Api : %s\n", apiTerdeteksi ? "API TERDETEKSI!" : "Aman");
 
-  // --- BACA KONTROL DARI FIREBASE (Setiap 1 detik) ---
-  if (millis() - waktuBacaKontrol > 1000) {
-    if (Firebase.ready() && signupOK) {
-      if (Firebase.RTDB.getBool(&fbdo, "/Kontrol/Kipas")) {
-        kipasDariWeb = fbdo.boolData();
-      }
-      if (Firebase.RTDB.getBool(&fbdo, "/Kontrol/Alarm")) {
-        alarmDariWeb = fbdo.boolData();
-      }
-    }
+  // --- BACA KONTROL DARI FIREBASE (Setiap 2 detik) ---
+  if (millis() - waktuBacaKontrol > 2000) {
+    kipasDariWeb = (firebaseGet("/Kontrol/Kipas") == "true");
+    alarmDariWeb = (firebaseGet("/Kontrol/Alarm") == "true");
     waktuBacaKontrol = millis();
   }
 
   // --- LOGIKA KIPAS ---
-  // Kipas menyala jika: suhu panas (otomatis) ATAU dinyalakan dari web
   bool kipasAktif = (suhuPanas || kipasDariWeb);
-  if (kipasAktif) {
-    digitalWrite(RELAY_PIN, RELAY_ON);
-    Serial.println("Fan        : NYALA");
-  } else {
-    digitalWrite(RELAY_PIN, RELAY_OFF);
-    Serial.println("Fan        : MATI");
-  }
+  digitalWrite(RELAY_PIN, kipasAktif ? RELAY_ON : RELAY_OFF);
+  Serial.printf("Fan        : %s\n", kipasAktif ? "NYALA" : "MATI");
 
   // --- LOGIKA API / ALARM & SERVO ---
-  // Alarm menyala jika: api terdeteksi (otomatis) ATAU dinyalakan dari web
   bool alarmAktif = (apiTerdeteksi || alarmDariWeb);
   if (alarmAktif) {
     waktuTerakhirApi = millis();
-
-    // Buka jendela (servo)
     if (posisiServo != SERVO_BUKA) {
       gerakServoSmooth(posisiServo, SERVO_BUKA);
       posisiServo = SERVO_BUKA;
     }
-
-    // Nyalakan buzzer
     digitalWrite(BUZZER_PIN, HIGH);
-
-    // Kedipkan LED
     if (millis() - waktuBlink >= 300) {
       waktuBlink = millis();
       ledState   = !ledState;
       digitalWrite(LED_PIN, ledState);
     }
-
     Serial.println("Status     : DARURAT - ALARM ON, SERVO BUKA");
-
   } else {
-    // Matikan semua peringatan
     digitalWrite(BUZZER_PIN, LOW);
     digitalWrite(LED_PIN,    LOW);
     ledState = LOW;
-
-    // Tunggu 3 detik setelah api hilang baru tutup jendela
     if (millis() - waktuTerakhirApi >= 3000) {
       if (posisiServo != SERVO_TUTUP) {
         gerakServoSmooth(posisiServo, SERVO_TUTUP);
@@ -225,20 +216,15 @@ void loop() {
     }
   }
 
-  // --- KIRIM DATA KE FIREBASE (Setiap 2 detik) ---
-  if (millis() - waktuKirimData > 2000) {
-    if (Firebase.ready() && signupOK) {
-      // Kirim data sensor
-      if (!isnan(suhu))      Firebase.RTDB.setFloat(&fbdo,  "/Sensor/Suhu",       suhu);
-      if (!isnan(kelembapan)) Firebase.RTDB.setFloat(&fbdo, "/Sensor/Kelembapan", kelembapan);
-      Firebase.RTDB.setBool(&fbdo, "/Sensor/Api", apiTerdeteksi);
-
-      // Kirim status aktuator (agar web dashboard bisa tampilkan status realtime)
-      Firebase.RTDB.setBool(&fbdo, "/Status/Kipas", kipasAktif);
-      Firebase.RTDB.setBool(&fbdo, "/Status/Alarm", alarmAktif);
-
-      Serial.println("[Firebase] Data terkirim ke cloud.");
+  // --- KIRIM DATA KE FIREBASE (Setiap 3 detik) ---
+  if (millis() - waktuKirimData > 3000) {
+    if (!isnan(suhu)) {
+      firebaseSet("/Sensor/Suhu",       String(suhu, 1));
+      firebaseSet("/Sensor/Kelembapan", String(kelembapan, 1));
     }
+    firebaseSet("/Sensor/Api",   apiTerdeteksi ? "true" : "false");
+    firebaseSet("/Status/Kipas", kipasAktif    ? "true" : "false");
+    firebaseSet("/Status/Alarm", alarmAktif    ? "true" : "false");
     waktuKirimData = millis();
   }
 
