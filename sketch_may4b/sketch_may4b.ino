@@ -22,8 +22,8 @@
 // ============================================
 // GANTI SESUAI DATA ANDA
 // ============================================
-#define WIFI_SSID     "Mansion"
-#define WIFI_PASSWORD "6A95IB76"
+#define WIFI_SSID     "iPhone"
+#define WIFI_PASSWORD "ayaaaaaa"
 
 const char* FIREBASE_URL     = "https://smartroomiot-5ecfd-default-rtdb.asia-southeast1.firebasedatabase.app";
 const char* FIREBASE_API_KEY = "AIzaSyBgr3EQDCI_Q_4ZidXilpGU5RuANc02d1k";
@@ -50,8 +50,6 @@ const char* FIREBASE_API_KEY = "AIzaSyBgr3EQDCI_Q_4ZidXilpGU5RuANc02d1k";
 // ============================================
 DHT dht(DHTPIN, DHTTYPE);
 Servo servoJendela;
-WiFiClientSecure client;
-HTTPClient http;
 
 unsigned long waktuTerakhirApi = 0;
 unsigned long waktuBlink       = 0;
@@ -67,8 +65,10 @@ bool alarmDariWeb = false;
 // FUNGSI: Kirim data ke Firebase (PUT)
 // ============================================
 void firebaseSet(String path, String jsonValue) {
-  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
+  WiFiClientSecure client;
+  HTTPClient http;
   client.setInsecure();
+  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
   http.begin(client, url);
   http.addHeader("Content-Type", "application/json");
   int httpCode = http.PUT(jsonValue);
@@ -84,8 +84,10 @@ void firebaseSet(String path, String jsonValue) {
 // FUNGSI: Baca data dari Firebase (GET)
 // ============================================
 String firebaseGet(String path) {
-  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
+  WiFiClientSecure client;
+  HTTPClient http;
   client.setInsecure();
+  String url = String(FIREBASE_URL) + path + ".json?auth=" + FIREBASE_API_KEY;
   http.begin(client, url);
   int httpCode = http.GET();
   String payload = "null";
@@ -117,7 +119,9 @@ void gerakServoSmooth(int dari, int ke) {
 // SETUP
 // ============================================
 void setup() {
+  delay(2000); // Tunggu serial siap
   Serial.begin(115200);
+  Serial.println("\n=== SMART ROOM SAFETY SYSTEM BOOT ===");
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); // Disable brownout detector
   dht.begin();
 
@@ -133,17 +137,28 @@ void setup() {
   servoJendela.setPeriodHertz(50);
   servoJendela.attach(SERVO_PIN, 500, 2400);
   servoJendela.write(SERVO_TUTUP);
+  Serial.println("Hardware OK.");
 
-  // Koneksi WiFi
+  // Koneksi WiFi dengan timeout 15 detik
+  Serial.print("Menghubungkan ke Wi-Fi: ");
+  Serial.println(WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.setTxPower(WIFI_POWER_8_5dBm); // Kurangi TX power agar tidak brownout
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Menghubungkan ke Wi-Fi");
+  unsigned long wifiStart = millis();
   while (WiFi.status() != WL_CONNECTED) {
+    if (millis() - wifiStart > 15000) {
+      Serial.println("\nWiFi GAGAL! Cek SSID/Password.");
+      Serial.println("Sistem berjalan TANPA Firebase.");
+      break;
+    }
     Serial.print(".");
     delay(300);
   }
-  Serial.println();
-  Serial.print("WiFi Terhubung! IP: ");
-  Serial.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("\nWiFi Terhubung! IP: ");
+    Serial.println(WiFi.localIP());
+  }
 
   // Inisialisasi kontrol di Firebase
   firebaseSet("/Kontrol/Kipas", "false");
