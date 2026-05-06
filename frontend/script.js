@@ -99,6 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalDataPoints = 0;
     let uptimeMinutes   = 0;
     let lastDangerState = null;
+    let totalNotifCount = 0;
+    let criticalNotifCount = 0;
+    let sumTemp = 0;
+    let countTemp = 0;
 
     // =============================================
     // 4. HELPER: FORMAT TIME
@@ -120,6 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. HELPER: TAMBAH NOTIFIKASI
     // =============================================
     function addNotification(type, title) {
+        totalNotifCount++;
+        if (type === 'danger') criticalNotifCount++;
+
+        const totalNotifEl = document.getElementById('total-notif');
+        const criticalNotifEl = document.getElementById('critical-notif');
+        if (totalNotifEl) totalNotifEl.innerText = totalNotifCount;
+        if (criticalNotifEl) criticalNotifEl.innerText = criticalNotifCount;
+
         const timeStr = getTimeStr();
         const icon      = type === 'danger' ? '<i class="fas fa-fire"></i>' : '<i class="fas fa-check-circle"></i>';
         const iconColor = type === 'danger' ? 'red' : 'green';
@@ -146,6 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     function updateUI(suhu, kelembapan, apiTerdeteksi, statusKipas, statusAlarm) {
         const timeStr = getTimeStr();
+
+        // Update Average Temp
+        if (suhu > 0 && suhu < 100) { // filter bad data
+            sumTemp += suhu;
+            countTemp++;
+            const avgTemp = (sumTemp / countTemp).toFixed(1);
+            const avgTempEl = document.getElementById('avg-temp');
+            if (avgTempEl) avgTempEl.innerText = avgTemp + '°C';
+        }
 
         // Update Suhu
         const safeTemp = Math.max(0, Math.min(60, suhu));
